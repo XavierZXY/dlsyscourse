@@ -48,22 +48,21 @@ def parse_mnist(image_filename, label_filename):
                 for MNIST will contain the values 0-9.
     """
     ### BEGIN YOUR CODE
-    with gzip.open(image_filename, 'rb') as f:
-        file_content = f.read()
-        # use big-endian!
-        num = struct.unpack('>I', file_content[4:8])[0]
-        X = np.array(struct.unpack(
-                    'B'*784*num, file_content[16:16+784*num]
-                ), dtype=np.float32)
-        X.resize((num, 784))
-    with gzip.open(label_filename, 'rb') as f:
-        file_content = f.read()
-        num = struct.unpack('>I', file_content[4: 8])[0]
-        y = np.array([struct.unpack('B', file_content[8+i:9+i])[0] for i in range(num)], dtype=np.uint8)
+
+    ### load image
+    with gzip.open(image_filename) as f:
+      # First 16 bytes are magic_number, n_imgs, n_rows, n_cols
+      pixels = np.frombuffer(f.read(), dtype='uint8', offset=16)
+      # print("type = %s" % pixels[0].dtype)
+      pixels = pixels.reshape(-1, 784).astype('float32') / 255
+      # pixels = pixels.reshape(-1, 784)
     
-    # THE MAX VALUE IS 255, NOT 256!
-    X = X / 255.0
-    return X, y
+    ### load label
+    with gzip.open(label_filename) as f:
+      # First 8 bytes are magic_number, n_labels
+      integer_labels = np.frombuffer(f.read(), dtype='uint8', offset=8)
+    
+    return (pixels, integer_labels) 
     ### END YOUR CODE
 
 
@@ -83,10 +82,29 @@ def softmax_loss(Z, y):
         Average softmax loss over the sample.
     """
     ### BEGIN YOUR CODE
-    # SIMPLIFED VERSION OF SOFTMAX + CROSS ENTROPY LOSS
+
+    # ## transform y to one-hot
+    # y.reshape(-1,1)
+    # shape = (y.shape[0], 10)
+    # y_one_hot = np.zeros(shape)
+    # rows = np.arange(y.shape[0])
+    # y_one_hot[rows, y] = 1
+
+    # ##compute f_z
+    # # f_z = np.exp(Z) / np.sum(np.exp(Z), axis=1, keepdims=True)
+    # f_z = np.sum(np.exp(Z), axis=1, keepdims=True)
+    # # f_z -= f_z[y]
+    # # print("\n log(f_z) \n", np.log(f_z))
+
+    # return np.sum(np.log(f_z)*y_one_hot) / y_one_hot.shape[0]
+    
     Z_y = Z[np.arange(Z.shape[0]), y]
+    # print("\n Z_y \n",Z_y.shape)
+
     Z_sum = np.log(np.exp(Z).sum(axis=1))
+    # print("Z_sum \n", Z_sum)
     return np.mean(Z_sum - Z_y)
+
     ### END YOUR CODE
 
 
@@ -109,6 +127,7 @@ def softmax_regression_epoch(X, y, theta, lr = 0.1, batch=100):
         None
     """
     ### BEGIN YOUR CODE
+    # print("\n")
     num_examples = X.shape[0]
     for i in range(num_examples // batch + 1):
         j = min((i+1) * batch, num_examples)
@@ -117,14 +136,19 @@ def softmax_regression_epoch(X, y, theta, lr = 0.1, batch=100):
         m = j - i*batch
         if m == 0:
             break
-        X_exp = np.exp(X_b @ theta)
+        X_exp = np.exp(X_b.dot(theta))
         exp_sum = X_exp.sum(axis=1)
-        # RESHAPE!!!
-        Z = X_exp / exp_sum.reshape(m, 1) # num_examples * num_classes
+
+        ##RESHAPE!!!
+        Z = X_exp / exp_sum.reshape(m, 1) # num_example * num_class
+        ##Transform y to one_hot code
         I = np.zeros_like(Z)
         I[np.arange(Z.shape[0]), y_b] = 1
-        grad = X_b.T @ (Z - I) / Z.shape[0]
-        theta[:, :] -= lr * grad
+        grad = X_b.T.dot((Z - I) / Z.shape[0]) 
+        # grad = X_b.T @ (Z - I) / Z.shape[0]
+        # print(np.mean(Z-I).shape)
+        theta -= lr*grad
+        
     ### END YOUR CODE
 
 
@@ -151,27 +175,31 @@ def nn_epoch(X, y, W1, W2, lr = 0.1, batch=100):
         None
     """
     ### BEGIN YOUR CODE
-    for i in range(X.shape[0] // batch + 1):
-        start, end = i * batch, min((i+1)*batch, X.shape[0])
-        m = end - start
-        if m == 0:
-            break
-        Xb, yb = X[start:end], y[start:end]
-        Z1 = Xb@W1
-        A1 = np.maximum(Z1, 0)
-        H = np.exp(A1 @ W2)
-        H /= H.sum(axis=1).reshape(m, 1)
-        I = np.zeros_like(H)
-        I[np.arange(m), yb] = 1
-        dW2 = A1.T @ (H - I)
-        I1 = np.zeros_like(Z1)
-        I1[Z1 > 0] = 1
-        dW1 = Xb.T @ (((H - I) @ W2.T) * I1)
-        W1[:, :] -= lr / m * dW1
-        W2[:, :] -= lr / m * dW2
+    # print("W1.shape={}".format(W1.shape))
+    for i in range(X.shape[0]//batch + 1):
+      ##batch
+      start, end = i*batch, min((i+1)*batch, X.shape[0])
+      m = end - start
+      if m == 0:
+        break
+      X_b, y_b = X[start:end], y[start:end]
+      
+      Z1_p = X_b.dot(W1)
+      Z1 = np.maximum(Z1_p, 0)  #Relu
+      G2_p = np.exp(Z1.dot(W2))
+      # H /= H.sum(axis=1).reshape(m, 1)
+      G2 = G2_p / G2_p.sum(axis=1, keepdims=True)
+      
+      I = np.zeros_like(G2)
+      I[np.arange(m), y_b] = 1
+      dW2 = Z1.T.dot(G2-I)
+      
+      I1 = np.zeros_like(Z1_p)
+      I1[Z1_p > 0] = 1
+      dW1 = X_b.T.dot((G2 - I).dot(W2.T) * I1)
+      W1 -= lr / m * dW1
+      W2 -= lr / m * dW2
 
-
-        
     ### END YOUR CODE
 
 
@@ -195,6 +223,7 @@ def train_softmax(X_tr, y_tr, X_te, y_te, epochs=10, lr=0.5, batch=100,
             softmax_regression_epoch_cpp(X_tr, y_tr, theta, lr=lr, batch=batch)
         train_loss, train_err = loss_err(X_tr @ theta, y_tr)
         test_loss, test_err = loss_err(X_te @ theta, y_te)
+        # if epoch % 10 == 0:
         print("|  {:>4} |    {:.5f} |   {:.5f} |   {:.5f} |  {:.5f} |"\
               .format(epoch, train_loss, train_err, test_loss, test_err))
 

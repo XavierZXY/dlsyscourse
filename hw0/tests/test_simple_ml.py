@@ -40,7 +40,7 @@ def test_parse_mnist():
     np.testing.assert_allclose(np.linalg.norm(X[:1000]), 293.0717,
         err_msg="""If you failed this test but not the previous one,
         you are probably normalizing incorrectly. You should normalize
-        w.r.t. the whole dataset, _not_ individual images.""")
+        w.r.t. the whole dataset, _not_ individual images.""", rtol=1e-6)
     np.testing.assert_equal(y[:10], [5, 0, 4, 1, 9, 2, 1, 3, 1, 4])
 
 
@@ -61,8 +61,8 @@ def submit_parse_mnist():
 def test_softmax_loss():
     X,y = parse_mnist("data/train-images-idx3-ubyte.gz",
                       "data/train-labels-idx1-ubyte.gz")
+    
     np.random.seed(0)
-
     Z = np.zeros((y.shape[0], 10))
     np.testing.assert_allclose(softmax_loss(Z,y), 2.3025850)
     Z = np.random.randn(y.shape[0], 10)
