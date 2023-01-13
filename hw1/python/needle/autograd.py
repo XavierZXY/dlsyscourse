@@ -401,7 +401,7 @@ def compute_gradient_of_variables(output_tensor, out_grad):
     for node in reverse_topo_order:    
         sum_grad = node_to_output_grads_list[node][0]
         for t in node_to_output_grads_list[node][1:]:
-            sum_grad = sum_grad + t
+            sum_grad = sum_grad + (t if type(t) == tuple else t)
         node.grad = sum_grad
         
         if node.is_leaf():
