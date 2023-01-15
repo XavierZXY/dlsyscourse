@@ -88,22 +88,12 @@ class Linear(Module):
         self.out_features = out_features
 
         ### BEGIN YOUR SOLUTION
-        self.weight= Parameter(init.kaiming_uniform(in_features, out_features, requires_grad=True))
-        # NOTE: this line below will change type(self.bias) from 'Parameter' into 'ndl.Tensor'!
-        # self.bias = Parameter(init.kaiming_uniform(out_features, 1, requires_grad=True)).reshape((1, out_features))
-        if bias:
-            self.bias = Parameter(init.kaiming_uniform(out_features, 1, requires_grad=True).reshape((1, out_features)))
-        else:
-            self.bias = None
+        raise NotImplementedError()
         ### END YOUR SOLUTION
 
     def forward(self, X: Tensor) -> Tensor:
         ### BEGIN YOUR SOLUTION
-        X_mul_weight = X @ self.weight
-        if self.bias:
-            return X_mul_weight + self.bias.broadcast_to(X_mul_weight.shape)
-        else:
-            return X_mul_weight
+        raise NotImplementedError()
         ### END YOUR SOLUTION
 
 
@@ -111,14 +101,14 @@ class Linear(Module):
 class Flatten(Module):
     def forward(self, X):
         ### BEGIN YOUR SOLUTION
-        return X.reshape((X.shape[0], -1))
+        raise NotImplementedError()
         ### END YOUR SOLUTION
 
 
 class ReLU(Module):
     def forward(self, x: Tensor) -> Tensor:
         ### BEGIN YOUR SOLUTION
-        return ops.relu(x)
+        raise NotImplementedError()
         ### END YOUR SOLUTION
 
 
@@ -129,19 +119,16 @@ class Sequential(Module):
 
     def forward(self, x: Tensor) -> Tensor:
         ### BEGIN YOUR SOLUTION
-        for module in self.modules:
-            x = module(x)
-        return x
+        raise NotImplementedError()
         ### END YOUR SOLUTION
 
 
 class SoftmaxLoss(Module):
     def forward(self, logits: Tensor, y: Tensor):
         ### BEGIN YOUR SOLUTION
-        exp_sum = ops.logsumexp(logits, axes=(1, )).sum()
-        z_y_sum = (logits * init.one_hot(logits.shape[1], y)).sum()
-        return (exp_sum - z_y_sum) / logits.shape[0]
-        # END YOUR SOLUTION
+        raise NotImplementedError()
+        ### END YOUR SOLUTION
+
 
 
 class BatchNorm1d(Module):
@@ -151,33 +138,13 @@ class BatchNorm1d(Module):
         self.eps = eps
         self.momentum = momentum
         ### BEGIN YOUR SOLUTION
-        self.weight = Parameter(init.ones(self.dim, requires_grad=True))
-        self.bias = Parameter(init.zeros(self.dim, requires_grad=True))
-        self.running_mean = init.zeros(self.dim)
-        self.running_var = init.ones(self.dim)
+        raise NotImplementedError()
         ### END YOUR SOLUTION
 
 
     def forward(self, x: Tensor) -> Tensor:
         ### BEGIN YOUR SOLUTION
-        batch_size = x.shape[0]
-        mean = x.sum((0, )) / batch_size
-        # NOTE array with shape (4, ) is considered as a row, so it can be brcsto (2, 4) and cannot be brcsto (4, 2)
-        x_minus_mean = x - mean.broadcast_to(x.shape)
-        var = (x_minus_mean ** 2).sum((0, )) / batch_size
-        
-        if self.training:
-            self.running_mean = (1 - self.momentum) * self.running_mean + self.momentum * mean.data
-            self.running_var = (1 - self.momentum) * self.running_var + self.momentum * var.data
-
-            x_std = ((var + self.eps) ** 0.5).broadcast_to(x.shape)
-            x_normed = x_minus_mean / x_std
-            return x_normed * self.weight.broadcast_to(x.shape) + self.bias.broadcast_to(x.shape)
-        else:
-            # NOTE no momentum here!
-            x_normed = (x - self.running_mean) / (self.running_var + self.eps) ** 0.5
-            # NOTE testing time also need self.weight and self.bias
-            return x_normed * self.weight.broadcast_to(x.shape) + self.bias.broadcast_to(x.shape)
+        raise NotImplementedError()
         ### END YOUR SOLUTION
 
 
@@ -187,25 +154,12 @@ class LayerNorm1d(Module):
         self.dim = dim
         self.eps = eps
         ### BEGIN YOUR SOLUTION
-        self.weight = Parameter(init.ones(self.dim, requires_grad=True))
-        # NOTE bias initialized to 0!!!
-        self.bias = Parameter(init.zeros(self.dim, requires_grad=True))
+        raise NotImplementedError()
         ### END YOUR SOLUTION
 
     def forward(self, x: Tensor) -> Tensor:
         ### BEGIN YOUR SOLUTION
-        batch_size = x.shape[0]
-        feature_size = x.shape[1]
-        # NOTE need reshape, because (4, ) can brcsto (2, 4) but (4, ) cannot brcsto (4, 2)
-        mean = x.sum(axes=(1, )).reshape((batch_size, 1)) / feature_size
-        
-        # NOTE need manual broadcast_to!!!
-        x_minus_mean = x - mean.broadcast_to(x.shape)
-        x_std = ((x_minus_mean ** 2).sum(axes=(1, )).reshape((batch_size, 1)) / feature_size + self.eps) ** 0.5
-        # NOTE need manual broadcast_to!!!
-        normed = x_minus_mean / x_std.broadcast_to(x.shape)
-        
-        return self.weight.broadcast_to(x.shape) * normed + self.bias.broadcast_to(x.shape)
+        raise NotImplementedError()
         ### END YOUR SOLUTION
 
 
@@ -216,14 +170,7 @@ class Dropout(Module):
 
     def forward(self, x: Tensor) -> Tensor:
         ### BEGIN YOUR SOLUTION
-        # NOTE Dropout is training only
-        # NOTE 1 - self.p
-        mask = init.randb(*x.shape, p=1 - self.p)
-        if self.training:
-            x_mask = x * mask
-            return x_mask / (1 - self.p)
-        else:
-            return x
+        raise NotImplementedError()
         ### END YOUR SOLUTION
 
 
@@ -234,7 +181,7 @@ class Residual(Module):
 
     def forward(self, x: Tensor) -> Tensor:
         ### BEGIN YOUR SOLUTION
-        return x + self.fn(x)
+        raise NotImplementedError()
         ### END YOUR SOLUTION
 
 
