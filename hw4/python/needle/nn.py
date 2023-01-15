@@ -88,65 +88,33 @@ class Linear(Module):
         self.out_features = out_features
 
         ### BEGIN YOUR SOLUTION
-        self.weight= Parameter(
-            init.kaiming_uniform(
-                in_features, 
-                out_features, 
-                shape=(in_features, out_features),
-                device=device,
-                dtype=dtype, 
-                requires_grad=True
-            )
-        )
-        # NOTE: this line below will change type(self.bias) from 'Parameter' into 'ndl.Tensor'!
-        # self.bias = Parameter(init.kaiming_uniform(out_features, 1, requires_grad=True)).reshape((1, out_features))
-        if bias:
-            self.bias = Parameter(
-                init.kaiming_uniform(
-                    out_features, 
-                    1,
-                    shape=(out_features, 1),
-                    device=device,
-                    dtype=dtype, 
-                    requires_grad=True
-                    ).reshape((1, out_features)
-                )
-            )
-        else:
-            self.bias = None
+        raise NotImplementedError()
         ### END YOUR SOLUTION
 
     def forward(self, X: Tensor) -> Tensor:
         ### BEGIN YOUR SOLUTION
-        X_mul_weight = X @ self.weight
-        if self.bias:
-            return X_mul_weight + self.bias.broadcast_to(X_mul_weight.shape)
-        else:
-            return X_mul_weight
+        raise NotImplementedError()
         ### END YOUR SOLUTION
 
 
 class Flatten(Module):
     def forward(self, X):
         ### BEGIN YOUR SOLUTION
-        length = 1
-        for i in X.shape[1:]:
-            length *= i
-        return X.reshape((X.shape[0], length))
+        raise NotImplementedError()
         ### END YOUR SOLUTION
 
 
 class ReLU(Module):
     def forward(self, x: Tensor) -> Tensor:
         ### BEGIN YOUR SOLUTION
-        return ops.relu(x)
+        raise NotImplementedError()
         ### END YOUR SOLUTION
 
 
 class Tanh(Module):
     def forward(self, x: Tensor) -> Tensor:
         ### BEGIN YOUR SOLUTION
-        return ops.tanh(x)
+        raise NotImplementedError()
         ### END YOUR SOLUTION
 
 
@@ -156,8 +124,7 @@ class Sigmoid(Module):
 
     def forward(self, x: Tensor) -> Tensor:
         ### BEGIN YOUR SOLUTION
-        return (1 + ops.exp(-x)) ** (-1)
-        # return ops.exp(x) / (1 + ops.exp(x))
+        raise NotImplementedError()
         ### END YOUR SOLUTION
 
 
@@ -168,18 +135,14 @@ class Sequential(Module):
 
     def forward(self, x: Tensor) -> Tensor:
         ### BEGIN YOUR SOLUTION
-        for module in self.modules:
-            x = module(x)
-        return x
+        raise NotImplementedError()
         ### END YOUR SOLUTION
 
 
 class SoftmaxLoss(Module):
     def forward(self, logits: Tensor, y: Tensor):
         ### BEGIN YOUR SOLUTION
-        exp_sum = ops.logsumexp(logits, axes=(1, )).sum()
-        z_y_sum = (logits * init.one_hot(logits.shape[1], y, logits.device, logits.dtype)).sum()
-        return (exp_sum - z_y_sum) / logits.shape[0]
+        raise NotImplementedError()
         ### END YOUR SOLUTION
 
 
@@ -190,32 +153,12 @@ class BatchNorm1d(Module):
         self.eps = eps
         self.momentum = momentum
         ### BEGIN YOUR SOLUTION
-        self.weight = Parameter(init.ones(self.dim, device=device, dtype=dtype, requires_grad=True))
-        self.bias = Parameter(init.zeros(self.dim, device=device, dtype=dtype, requires_grad=True))
-        self.running_mean = init.zeros(self.dim, device=device, dtype=dtype)
-        self.running_var = init.ones(self.dim, device=device, dtype=dtype)
+        raise NotImplementedError()
         ### END YOUR SOLUTION
 
     def forward(self, x: Tensor) -> Tensor:
         ### BEGIN YOUR SOLUTION
-        batch_size = x.shape[0]
-        mean = x.sum((0, )) / batch_size
-        # NOTE reshape before broadcast
-        x_minus_mean = x - mean.reshape((1, x.shape[1])).broadcast_to(x.shape)
-        var = (x_minus_mean ** 2).sum((0, )) / batch_size
-        
-        if self.training:
-            self.running_mean = (1 - self.momentum) * self.running_mean + self.momentum * mean.data
-            self.running_var = (1 - self.momentum) * self.running_var + self.momentum * var.data
-
-            x_std = ((var + self.eps) ** 0.5).reshape((1, x.shape[1])).broadcast_to(x.shape)
-            x_normed = x_minus_mean / x_std
-            return x_normed * self.weight.reshape((1, self.dim)).broadcast_to(x.shape) + self.bias.reshape((1, self.dim)).broadcast_to(x.shape)
-        else:
-            # NOTE no momentum here!
-            x_normed = (x - self.running_mean.reshape((1, self.dim)).broadcast_to(x.shape)) / (self.running_var.reshape((1, self.dim)).broadcast_to(x.shape) + self.eps) ** 0.5
-            # NOTE testing time also need self.weight and self.bias
-            return x_normed * self.weight.reshape((1, self.dim)).broadcast_to(x.shape) + self.bias.reshape((1, self.dim)).broadcast_to(x.shape)
+        raise NotImplementedError()
         ### END YOUR SOLUTION
 
 
@@ -237,25 +180,12 @@ class LayerNorm1d(Module):
         self.dim = dim
         self.eps = eps
         ### BEGIN YOUR SOLUTION
-        self.weight = Parameter(init.ones(self.dim, device=device, dtype=dtype, requires_grad=True))
-        # NOTE bias initialized to 0!!!
-        self.bias = Parameter(init.zeros(self.dim, device=device, dtype=dtype, requires_grad=True))
+        raise NotImplementedError()
         ### END YOUR SOLUTION
 
     def forward(self, x: Tensor) -> Tensor:
         ### BEGIN YOUR SOLUTION
-        batch_size = x.shape[0]
-        feature_size = x.shape[1]
-        # NOTE reshape before broadcast
-        mean = x.sum(axes=(1, )).reshape((batch_size, 1)) / feature_size
-        
-        # NOTE need manual broadcast_to!!!
-        x_minus_mean = x - mean.reshape((x.shape[0], 1)).broadcast_to(x.shape)
-        x_std = ((x_minus_mean ** 2).sum(axes=(1, )).reshape((batch_size, 1)) / feature_size + self.eps) ** 0.5
-        # NOTE need manual broadcast_to!!!
-        normed = x_minus_mean / x_std.reshape((x.shape[0], 1)).broadcast_to(x.shape)
-        
-        return self.weight.reshape((x.shape[0], 1)).broadcast_to(x.shape) * normed + self.bias.reshape((x.shape[0], 1)).broadcast_to(x.shape)
+        raise NotImplementedError()
         ### END YOUR SOLUTION
 
 
@@ -266,14 +196,7 @@ class Dropout(Module):
 
     def forward(self, x: Tensor) -> Tensor:
         ### BEGIN YOUR SOLUTION
-        # NOTE Dropout is training only
-        # NOTE 1 - self.p
-        mask = init.randb(*x.shape, p=1 - self.p, device=x.device, dtype=x.dtype)
-        if self.training:
-            x_mask = x * mask
-            return x_mask / (1 - self.p)
-        else:
-            return x
+        raise NotImplementedError()
         ### END YOUR SOLUTION
 
 
@@ -284,7 +207,7 @@ class Residual(Module):
 
     def forward(self, x: Tensor) -> Tensor:
         ### BEGIN YOUR SOLUTION
-        return x + self.fn(x)
+        raise NotImplementedError()
         ### END YOUR SOLUTION
 
 class Conv(Module):
@@ -307,40 +230,12 @@ class Conv(Module):
         self.stride = stride
 
         ### BEGIN YOUR SOLUTION
-        # NOTE: input NCHW, while conv op is NHWC
-        shape = (kernel_size, kernel_size, in_channels, out_channels)
-        self.weight = Parameter(init.kaiming_uniform(
-            self.in_channels * kernel_size * kernel_size, 
-            self.out_channels * kernel_size * kernel_size, 
-            shape=shape,
-            device=device,
-            dtype=dtype,
-            requires_grad=True
-        ))
-        if bias:
-            self.bias = Parameter(
-                init.rand(
-                    int(self.out_channels),
-                    low= -1 / (in_channels * kernel_size**2)**0.5,
-                    high= 1 / (in_channels * kernel_size**2)**0.5,
-                    device=device,
-                    dtype=dtype,
-                    requires_grad=True
-                )
-            )
-        else:
-            self.bias = None
+        raise NotImplementedError()
         ### END YOUR SOLUTION
 
     def forward(self, x: Tensor) -> Tensor:
         ### BEGIN YOUR SOLUTION
-        N, C, H, W = x.shape
-        x = x.transpose((1, 2)).transpose((2, 3))
-        out = ops.conv(x, self.weight, stride=self.stride, padding=self.kernel_size//2)
-        if self.bias:
-            out += self.bias.reshape((1, 1, 1, self.out_channels)).broadcast_to(out.shape)
-        # NOTE: out N H W C_out
-        return out.transpose((2, 3)).transpose((1, 2))
+        raise NotImplementedError()
         ### END YOUR SOLUTION
 
 
@@ -365,54 +260,7 @@ class RNNCell(Module):
         """
         super().__init__()
         ### BEGIN YOUR SOLUTION
-        self.input_size = input_size
-        self.hidden_size = hidden_size
-        self.bias = bias
-
-        self.W_ih = Parameter(
-            init.rand(
-                input_size, 
-                hidden_size, 
-                low=-1/hidden_size**0.5,
-                high=1/hidden_size**0.5,
-                device=device,
-                dtype=dtype,
-                requires_grad=True
-            )
-        )
-        self.W_hh = Parameter(
-            init.rand(
-                hidden_size, 
-                hidden_size, 
-                low=-1/hidden_size**0.5,
-                high=1/hidden_size**0.5,
-                device=device,
-                dtype=dtype,
-                requires_grad=True
-            )
-        )
-        if bias:
-            self.bias_ih = Parameter(
-                init.rand(
-                    hidden_size, 
-                    low=-1/hidden_size**0.5,
-                    high=1/hidden_size**0.5,
-                    device=device,
-                    dtype=dtype,
-                    requires_grad=True
-                )
-            )
-            self.bias_hh = Parameter(
-                init.rand(
-                    hidden_size, 
-                    low=-1/hidden_size**0.5,
-                    high=1/hidden_size**0.5,
-                    device=device,
-                    dtype=dtype,
-                    requires_grad=True
-                )
-            )
-        self.nonlinearity = Tanh() if nonlinearity == 'tanh' else ReLU()
+        raise NotImplementedError()
         ### END YOUR SOLUTION
 
     def forward(self, X, h=None):
@@ -427,15 +275,7 @@ class RNNCell(Module):
             for each element in the batch.
         """
         ### BEGIN YOUR SOLUTION
-        bs = X.shape[0]
-        out = X @ self.W_ih
-        if self.bias:
-            out += self.bias_ih.reshape((1, self.hidden_size)).broadcast_to((bs, self.hidden_size))
-        if h is not None:
-            out += h @ self.W_hh
-        if self.bias:
-            out += self.bias_hh.reshape((1, self.hidden_size)).broadcast_to((bs, self.hidden_size))
-        return self.nonlinearity(out)
+        raise NotImplementedError()
         ### END YOUR SOLUTION
 
 
@@ -464,14 +304,7 @@ class RNN(Module):
         """
         super().__init__()
         ### BEGIN YOUR SOLUTION
-        self.hidden_size = hidden_size
-        self.device = device
-        self.dtype = dtype
-        self.num_layers = num_layers
-        rnn_cells = [RNNCell(input_size, hidden_size, bias, nonlinearity, device, dtype)]
-        for i in range(num_layers - 1):
-            rnn_cells.append(RNNCell(hidden_size, hidden_size, bias, nonlinearity, device, dtype))
-        self.rnn_cells = rnn_cells
+        raise NotImplementedError()
         ### END YOUR SOLUTION
 
     def forward(self, X, h0=None):
@@ -487,19 +320,7 @@ class RNN(Module):
         h_n of shape (num_layers, bs, hidden_size) containing the final hidden state for each element in the batch.
         """
         ### BEGIN YOUR SOLUTION
-        Xs = ops.split(X, 0)
-        hs = ops.split(h0, 0) if h0 is not None else [None] * self.num_layers
-        out = []
-        for t, x in enumerate(Xs):
-            hiddens = []
-            for l, model in enumerate(self.rnn_cells):
-                x = model(x, hs[l])
-                hiddens.append(x)
-            out.append(x)
-            hs = hiddens
-        out = ops.stack(out, 0)
-        hs = ops.stack(hs, 0)
-        return out, hs
+        raise NotImplementedError()
         ### END YOUR SOLUTION
 
 
@@ -523,27 +344,7 @@ class LSTMCell(Module):
         """
         super().__init__()
         ### BEGIN YOUR SOLUTION
-        self.input_size = input_size
-        self.hidden_size = hidden_size
-        self.bias = bias
-
-        il, hl = input_size, hidden_size
-        self.W_ih = Parameter(
-            init.rand(il, 4*hl, low=-1/hl**0.5, high=1/hl**0.5,device=device,dtype=dtype,requires_grad=True)
-        )
-        self.W_hh = Parameter(
-            # NOTE: hl, 4*hl
-            init.rand(hl, 4*hl, low=-1/hl**0.5, high=1/hl**0.5,device=device,dtype=dtype,requires_grad=True)
-        )
-        if bias:
-            self.bias_ih = Parameter(
-                init.rand(4*hl, low=-1/hl**0.5,high=1/hl**0.5,device=device,dtype=dtype,requires_grad=True)
-            )
-            self.bias_hh = Parameter(
-                init.rand(4*hl, low=-1/hl**0.5,high=1/hl**0.5,device=device,dtype=dtype,requires_grad=True)
-            )
-        self.tanh = Tanh()
-        self.sigmoid = Sigmoid()
+        raise NotImplementedError()
         ### END YOUR SOLUTION
 
 
@@ -564,29 +365,7 @@ class LSTMCell(Module):
             element in the batch.
         """
         ### BEGIN YOUR SOLUTION
-        bs = X.shape[0]
-        h0, c0 = (None, None) if h is None else h
-        hl = self.hidden_size
-        out = X @ self.W_ih
-        if h0 is not None:
-            out += h0 @ self.W_hh
-        if self.bias:
-            out += self.bias_ih.reshape((1, 4*hl)).broadcast_to((bs, 4*hl))
-            out += self.bias_hh.reshape((1, 4*hl)).broadcast_to((bs, 4*hl))
-        out_list = ops.split(out, 1)
-        # NOTE out_list is a TensorTuple, cannot slice
-        i = ops.stack(tuple([out_list[i] for i in range(0, hl)]), 1)
-        f = ops.stack(tuple([out_list[i] for i in range(hl, 2*hl)]), 1)
-        g = ops.stack(tuple([out_list[i] for i in range(2*hl, 3*hl)]), 1)
-        o = ops.stack(tuple([out_list[i] for i in range(3*hl, 4*hl)]), 1)
-
-
-        g = self.tanh(g)
-        i, f, o = self.sigmoid(i), self.sigmoid(f), self.sigmoid(o)
-        
-        c1 = i * g if c0 is None else f * c0 + i * g
-        h1 = o * self.tanh(c1)
-        return (h1, c1)
+        raise NotImplementedError()
         ### END YOUR SOLUTION
 
 
@@ -614,12 +393,7 @@ class LSTM(Module):
             of shape (4*hidden_size,).
         """
         ### BEGIN YOUR SOLUTION
-        self.num_layers = num_layers
-
-        lstm_cells = [LSTMCell(input_size, hidden_size, bias, device, dtype)]
-        for i in range(num_layers - 1):
-            lstm_cells.append(LSTMCell(hidden_size, hidden_size, bias, device, dtype))
-        self.lstm_cells = lstm_cells
+        raise NotImplementedError()
         ### END YOUR SOLUTION
 
     def forward(self, X, h=None):
@@ -640,25 +414,7 @@ class LSTM(Module):
             h_n of shape (num_layers, bs, hidden_size) containing the final hidden cell state for each element in the batch.
         """
         ### BEGIN YOUR SOLUTION
-        Xs = ops.split(X, 0)
-        h0, c0 = (None, None) if h is None else h
-        hs = [None] * self.num_layers if h0 is None else ops.split(h0, 0)
-        cs = [None] * self.num_layers if c0 is None else ops.split(c0, 0)
-        out = []
-        for t, x in enumerate(Xs):
-            hiddens = []
-            cells = []
-            for l, model in enumerate(self.lstm_cells):
-                x, c_out = model(x, (hs[l], cs[l]))
-                hiddens.append(x)
-                cells.append(c_out)
-            out.append(x)
-            hs = hiddens
-            cs = cells
-        out = ops.stack(out, 0)
-        hs = ops.stack(hs, 0)
-        cs = ops.stack(cs, 0)
-        return out, (hs, cs)
+        raise NotImplementedError()
         ### END YOUR SOLUTION
 
 
@@ -677,13 +433,7 @@ class Embedding(Module):
             initialized from N(0, 1).
         """
         ### BEGIN YOUR SOLUTION
-        self.num_embeddings = num_embeddings
-        self.embedding_dim = embedding_dim
-
-        # NOTE: Do not use nn.Linear(), the weight do not need grad!
-        self.weight = Parameter(init.randn(
-            num_embeddings, embedding_dim, device=device, dtype=dtype))
-
+        raise NotImplementedError()
         ### END YOUR SOLUTION
 
     def forward(self, x: Tensor) -> Tensor:
@@ -697,9 +447,5 @@ class Embedding(Module):
         output of shape (seq_len, bs, embedding_dim)
         """
         ### BEGIN YOUR SOLUTION
-        one_hot_vectors = self.one_hot = init.one_hot(self.num_embeddings, x, device=x.device, dtype=x.dtype)
-        seq_len, bs, em = one_hot_vectors.shape
-        one_hot_vectors = one_hot_vectors.reshape((seq_len*bs, em))
-        out = one_hot_vectors @ self.weight
-        return out.reshape((seq_len, bs, self.embedding_dim))
+        raise NotImplementedError()
         ### END YOUR SOLUTION

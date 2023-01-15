@@ -1,1 +1,4 @@
-I implemented cuda matmul with naive method, which may be changed later. 
+# Homework 3
+
+Public repository and stub/testing code for Homework 3 of 10-714.
+

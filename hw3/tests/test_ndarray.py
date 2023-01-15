@@ -287,7 +287,7 @@ def test_broadcast_to(device, params):
     check_same_memory(A, rhs)
 
 
-matmul_dims = [(16, 16, 32), 
+matmul_dims = [(16, 16, 16), 
     (8, 8, 8), 
     (1, 2, 3), 
     (3, 4, 5), 

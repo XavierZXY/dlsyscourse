@@ -1,4 +1,3 @@
-import enum
 import operator
 import math
 from functools import reduce
@@ -242,7 +241,7 @@ class NDArray:
         """
 
         ### BEGIN YOUR SOLUTION
-        return self.as_strided(new_shape, NDArray.compact_strides(new_shape))
+        raise NotImplementedError()
         ### END YOUR SOLUTION
 
     def permute(self, new_axes):
@@ -265,9 +264,7 @@ class NDArray:
         """
 
         ### BEGIN YOUR SOLUTION
-        new_strides = tuple([self.strides[i] for i in new_axes])
-        new_shape = tuple([self.shape[i] for i in new_axes])
-        return self.as_strided(new_shape, new_strides)
+        raise NotImplementedError()
         ### END YOUR SOLUTION
 
     def broadcast_to(self, new_shape):
@@ -288,12 +285,7 @@ class NDArray:
         """
 
         ### BEGIN YOUR SOLUTION
-        new_strides = list(self.strides)
-        for i, d in enumerate(self.shape):
-            assert d == 1 or new_shape[i] == d
-            if d == 1:
-                new_strides[i] = 0
-        return self.as_strided(new_shape, tuple(new_strides))
+        raise NotImplementedError()
         ### END YOUR SOLUTION
 
     ### Get and set elements
@@ -356,15 +348,7 @@ class NDArray:
         assert len(idxs) == self.ndim, "Need indexes equal to number of dimensions"
 
         ### BEGIN YOUR SOLUTION
-        new_offset = 0
-        new_shape = list(self.shape)
-        new_strides = list(self.strides)
-        for i, sli in enumerate(idxs):
-            new_offset += self.strides[i] * sli.start
-            new_shape[i] = math.ceil((sli.stop - sli.start) / sli.step)
-            new_strides[i] = self.strides[i] * sli.step
-        # print(new_shape, new_strides)
-        return NDArray.make(tuple(new_shape), tuple(new_strides), self.device, self._handle, new_offset)
+        raise NotImplementedError()
         ### END YOUR SOLUTION
 
     def __setitem__(self, idxs, other):
@@ -507,13 +491,15 @@ class NDArray:
             def tile(a, tile):
                 return a.as_strided(
                     (a.shape[0] // tile, a.shape[1] // tile, tile, tile),
-                    (a.shape[1] * tile, tile, a.shape[1], 1),
+                    (a.shape[1] * tile, tile, self.shape[1], 1),
                 )
+
             t = self.device.__tile_size__
             a = tile(self.compact(), t).compact()
             b = tile(other.compact(), t).compact()
             out = NDArray.make((a.shape[0], b.shape[1], t, t), device=self.device)
             self.device.matmul_tiled(a._handle, b._handle, out._handle, m, n, p)
+
             return (
                 out.permute((0, 2, 1, 3))
                 .compact()
