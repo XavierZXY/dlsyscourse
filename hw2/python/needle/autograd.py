@@ -3,14 +3,16 @@ import needle
 from typing import List, Optional, NamedTuple, Tuple, Union
 from collections import namedtuple
 import numpy
+from needle import init
 
 # needle version
 LAZY_MODE = False
 TENSOR_COUNTER = 0
 
-# NOTE: we will import numpy as the array_api
-# as the backend for our computations, this line will change in later homeworks
+# NOTE: we will numpy as the array_api
+# to backup our computations, this line will change in later homeworks
 import numpy as array_api
+
 NDArray = numpy.ndarray
 
 
@@ -33,9 +35,30 @@ class CPUDevice(Device):
     def enabled(self):
         return True
 
+    def zeros(self, *shape, dtype="float32"):
+        return numpy.zeros(shape, dtype=dtype)
+
+    def ones(self, *shape, dtype="float32"):
+        return numpy.ones(shape, dtype=dtype)
+
+    def randn(self, *shape):
+        # note: numpy doesn't support types within standard random routines, and 
+        # .astype("float32") does work if we're generating a singleton
+        return numpy.random.randn(*shape) 
+
+    def rand(self, *shape):
+        # note: numpy doesn't support types within standard random routines, and 
+        # .astype("float32") does work if we're generating a singleton
+        return numpy.random.rand(*shape)
+
+    def one_hot(self, n, i, dtype="float32"):
+        return numpy.eye(n, dtype=dtype)[i]
+
+
 def cpu():
     """Return cpu device"""
     return CPUDevice()
+
 
 def all_devices():
     """return a list of all available devices"""
@@ -97,7 +120,7 @@ class Op:
 
 
 class TensorOp(Op):
-    """ Op class specialized to output tensors, will be alternate subclasses for other structures """
+    """ Op class specialized to output tensors, will be alterate subclasses for other structures """
 
     def __call__(self, *args):
         return Tensor.make_from_op(self, args)
@@ -261,6 +284,8 @@ class Tensor(Value):
         tensor = Tensor.__new__(Tensor)
         tensor._init(op, inputs)
         if not LAZY_MODE:
+            if not tensor.requires_grad:
+                return tensor.detach()
             tensor.realize_cached_data()
         return tensor
 
@@ -311,7 +336,7 @@ class Tensor(Value):
         return data.device
 
     def backward(self, out_grad=None):
-        out_grad = out_grad if out_grad else Tensor(numpy.ones(self.shape))
+        out_grad = out_grad if out_grad else init.ones(*self.shape, dtype=self.dtype, device=self.device)
         compute_gradient_of_variables(self, out_grad)
 
     def __repr__(self):
@@ -339,10 +364,9 @@ class Tensor(Value):
             return needle.ops.MulScalar(other)(self)
 
     def __pow__(self, other):
-        if isinstance(other, Tensor):
-            raise NotImplementedError()
-        else:
-            return needle.ops.PowerScalar(other)(self)
+        ### BEGIN YOUR SOLUTION
+        raise NotImplementedError()
+        ### END YOUR SOLUTION
 
     def __sub__(self, other):
         if isinstance(other, Tensor):
@@ -397,20 +421,9 @@ def compute_gradient_of_variables(output_tensor, out_grad):
 
     # Traverse graph in reverse topological order given the output_node that we are taking gradient wrt.
     reverse_topo_order = list(reversed(find_topo_sort([output_tensor])))
+
     ### BEGIN YOUR SOLUTION
-    for node in reverse_topo_order:    
-        sum_grad = node_to_output_grads_list[node][0]
-        for t in node_to_output_grads_list[node][1:]:
-            sum_grad = sum_grad + (t if type(t) == tuple else t)
-        node.grad = sum_grad
-        
-        if node.is_leaf():
-            continue
-        for i, grad in enumerate(node.op.gradient_as_tuple(node.grad, node)):
-            input_ =  node.inputs[i]
-            if input_ not in node_to_output_grads_list:
-                node_to_output_grads_list[input_] = []
-            node_to_output_grads_list[input_].append(grad)
+    raise NotImplementedError()
     ### END YOUR SOLUTION
 
 
@@ -423,25 +436,14 @@ def find_topo_sort(node_list: List[Value]) -> List[Value]:
     sort.
     """
     ### BEGIN YOUR SOLUTION
-    #raise NotImplementedError()
-    visited = set()
-    topo_order = []
-    for node in node_list:
-        if node not in visited: topo_sort_dfs(node, visited, topo_order)
-    return topo_order
+    raise NotImplementedError()
     ### END YOUR SOLUTION
 
 
-def topo_sort_dfs(node: Value, visited, topo_order):
+def topo_sort_dfs(node, visited, topo_order):
     """Post-order DFS"""
     ### BEGIN YOUR SOLUTION
-    if node in visited: return
-
-    for next in node.inputs:
-        topo_sort_dfs(next, visited, topo_order)
-    
-    visited.add(node)
-    topo_order.append(node)
+    raise NotImplementedError()
     ### END YOUR SOLUTION
 
 
@@ -454,5 +456,4 @@ def sum_node_list(node_list):
     """Custom sum function in order to avoid create redundant nodes in Python sum implementation."""
     from operator import add
     from functools import reduce
-
     return reduce(add, node_list)
