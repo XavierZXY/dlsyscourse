@@ -403,8 +403,22 @@ class LogSumExp(TensorOp):
 
     def gradient(self, out_grad, node):
         ### BEGIN YOUR SOLUTION
-        
-        raise NotImplementedError()
+        Z = node.inputs[0]
+        if self.axes:
+            shape = [1] * len(Z.shape)
+            s = set(self.axes)
+            j = 0
+            for i in range(len(shape)):
+                if i not in s:
+                    shape[i] = node.shape[j]
+                    j += 1
+            node_new = node.reshape(shape)
+            grad_new = out_grad.reshape(shape)
+        else:
+            node_new = node
+            grad_new = out_grad
+
+        return grad_new * exp(Z - node_new)
         ### END YOUR SOLUTION
 
 

@@ -139,6 +139,7 @@ class Sequential(Module):
 class SoftmaxLoss(Module):
     def forward(self, logits: Tensor, y: Tensor):
         ### BEGIN YOUR SOLUTION
+        
         raise NotImplementedError()
         ### END YOUR SOLUTION
 
