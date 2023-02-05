@@ -404,6 +404,7 @@ class LogSumExp(TensorOp):
     def gradient(self, out_grad, node):
         ### BEGIN YOUR SOLUTION
         Z = node.inputs[0]
+        ## reshape the output of logexpsum
         if self.axes:
             shape = [1] * len(Z.shape)
             s = set(self.axes)
@@ -418,6 +419,7 @@ class LogSumExp(TensorOp):
             node_new = node
             grad_new = out_grad
 
+        ### not clear yet
         return grad_new * exp(Z - node_new)
         ### END YOUR SOLUTION
 
