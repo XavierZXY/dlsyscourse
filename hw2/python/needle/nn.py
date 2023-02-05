@@ -171,6 +171,7 @@ class LayerNorm1d(Module):
         ### BEGIN YOUR SOLUTION
         self.weight = Parameter(init.ones(self.dim, requires_grad=True))
         self.bias = Parameter(init.zeros(self.dim, requires_grad=True))
+       
         ### END YOUR SOLUTION
 
     def forward(self, x: Tensor) -> Tensor:
