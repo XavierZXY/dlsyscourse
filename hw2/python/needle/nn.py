@@ -157,6 +157,7 @@ class BatchNorm1d(Module):
         self.bias = Parameter(init.zeros(self.dim, requires_grad=True))
         self.running_mean = init.zeros(self.dim)
         self.running_var = init.ones(self.dim)
+        
         ### END YOUR SOLUTION
 
 
