@@ -153,13 +153,32 @@ class BatchNorm1d(Module):
         self.eps = eps
         self.momentum = momentum
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        self.weight = Parameter(init.ones(self.dim, requires_grad=True))
+        self.bias = Parameter(init.zeros(self.dim, requires_grad=True))
+        self.running_mean = init.zeros(self.dim)
+        self.running_var = init.ones(self.dim)
         ### END YOUR SOLUTION
 
 
     def forward(self, x: Tensor) -> Tensor:
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        batch_size = x.shape[0]
+        mean = x.sum((0, )) / batch_size
+        # NOTE array with shape (4, ) is considered as a row, so it can be brcsto (2, 4) and cnnot be brcsto (4, 2)
+        x_minus_mean = x - mean.broadcast_to(x.shape)
+        var = (x_minus_mean ** 2).sum((0, )) / batch_size
+
+        if self.training:
+            self.running_mean = (1 - self.momentum) * self.running_mean + self.momentum * mean.data
+            self.running_var = (1 - self.momentum) * self.running_var + self.momentum * var.data
+            x_std = ((var + self.eps) ** 0.5).broadcast_to(x.shape)
+            x_normed = x_minus_mean / x_std
+            return x_normed * self.weight.broadcast_to(x.shape) + self.bias.broadcast_to(x.shape)
+        else:
+            # NOTE no momentum here!
+            x_normed = (x - self.running_mean) / (self.running_var + self.eps) ** 0.5
+            # NOTE testing time also need self.weight and self.bias
+            return x_normed * self.weight.broadcast_to(x.shape) + self.bias.broadcast_to(x.shape)
         ### END YOUR SOLUTION
 
 
