@@ -157,7 +157,7 @@ class BatchNorm1d(Module):
         self.bias = Parameter(init.zeros(self.dim, requires_grad=True))
         self.running_mean = init.zeros(self.dim)
         self.running_var = init.ones(self.dim)
-        
+
         ### END YOUR SOLUTION
 
 
@@ -219,7 +219,14 @@ class Dropout(Module):
 
     def forward(self, x: Tensor) -> Tensor:
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        # NOTE Dropout is training only
+        # NOTE 1 - self.p
+        if self.training:
+            mask = init.randb(*x.shape, p = 1-self.p)
+            x_mask = x * mask
+            return x_mask / (1 - self.p)
+        else:
+            return x
         ### END YOUR SOLUTION
 
 
