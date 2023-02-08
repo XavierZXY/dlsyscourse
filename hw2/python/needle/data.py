@@ -136,17 +136,27 @@ class MNISTDataset(Dataset):
         transforms: Optional[List] = None,
     ):
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        super().__init__(transforms)
+        self.images, self.labels = parse_mnist(image_filename=image_filename, label_filename=label_filename)
+
         ### END YOUR SOLUTION
 
     def __getitem__(self, index) -> object:
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        X, y = self.images[index], self.labels[index]
+        # NOTEL `self.transforms ` need input shape like this
+        if self.transforms:
+            X_in = X.reshape((28, 28, -1))
+            X_out = self.apply_transforms(X_in)
+            X_ret = X_out.reshape(-1, 28*28)
+            return X_ret, y
+        else:
+            return X, y
         ### END YOUR SOLUTION
 
     def __len__(self) -> int:
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        return self.labels.shape[0]
         ### END YOUR SOLUTION
 
 class NDArrayDataset(Dataset):
