@@ -63,7 +63,24 @@ void Compact(const AlignedArray& a, AlignedArray* out, std::vector<uint32_t> sha
    *  function will implement here, so we won't repeat this note.)
    */
   /// BEGIN YOUR SOLUTION
-  
+  size_t dim = shape.size();  // 多维数组的维度
+  std::vector<uint32_t> pos(dim, 0);  // 当前位置在每个维度上的索引值，维度从里到外
+  for (size_t i = 0; i < out->size; i ++) {
+      uint32_t idx = 0;  // 初始化展开数组中的初始元素索引值为0
+      for (int j = 0; j < dim; j ++)
+        idx += strides[dim-1-j]*pos[j];  // 将多维数组索引位置对应到展开的一维数组中
+    out->ptr[i] = a.ptr[idx+offset];
+    pos[0] ++;  // 开始处理最内层维度上的下一个位置
+
+    //carry
+    for (int j = 0; j < dim; j ++) {
+        if (pos[j] == shape[dim-1-j]) {  // 已经遍历完该维度下所有位置
+            pos[j] = 0;  // 重置该层维度
+            if (j != dim - 1)
+                pos[j+1] += 1;  // 更高一层维度遍历下一层
+        }
+    }
+  }
   /// END YOUR SOLUTION
 }
 
@@ -80,7 +97,24 @@ void EwiseSetitem(const AlignedArray& a, AlignedArray* out, std::vector<uint32_t
    *   offset: offset of the *out* array (not a, which has zero offset, being compact)
    */
   /// BEGIN YOUR SOLUTION
-  
+  size_t dim = shape.size();  // 多维数组的维度
+  std::vector<uint32_t> pos(dim, 0);  // 当前位置在每个维度上的索引值，维度从里到外
+  for (size_t i = 0; i < a.size; i ++) {
+      uint32_t idx = 0;  // 初始化展开数组中的初始元素索引值为0
+      for (int j = 0; j < dim; j ++)
+        idx += strides[dim-1-j]*pos[j];  // 将多维数组索引位置对应到展开的一维数组中
+    out->ptr[idx+offset] = a.ptr[i];
+    pos[0] ++;  // 开始处理最内层维度上的下一个位置
+
+    //carry
+    for (int j = 0; j < dim; j ++) {
+        if (pos[j] == shape[dim-1-j]) {  // 已经遍历完该维度下所有位置
+            pos[j] = 0;  // 重置该层维度
+            if (j != dim - 1)
+                pos[j+1] += 1;  // 更高一层维度遍历下一层
+        }
+    }
+  }
   /// END YOUR SOLUTION
 }
 
@@ -101,7 +135,24 @@ void ScalarSetitem(const size_t size, scalar_t val, AlignedArray* out, std::vect
    */
 
   /// BEGIN YOUR SOLUTION
-  
+  size_t dim = shape.size();  // 多维数组的维度
+  std::vector<uint32_t> pos(dim, 0);  // 当前位置在每个维度上的索引值，维度从里到外
+  for (size_t i = 0; i < size; i ++) {
+      uint32_t idx = 0;  // 初始化展开数组中的初始元素索引值为0
+      for (int j = 0; j < dim; j ++)
+        idx += strides[dim-1-j]*pos[j];  // 将多维数组索引位置对应到展开的一维数组中
+    out->ptr[idx+offset] = val;
+    pos[0] ++;  // 开始处理最内层维度上的下一个位置
+
+    //carry
+    for (int j = 0; j < dim; j ++) {
+        if (pos[j] == shape[dim-1-j]) {  // 已经遍历完该维度下所有位置
+            pos[j] = 0;  // 重置该层维度
+            if (j != dim - 1)
+                pos[j+1] += 1;  // 更高一层维度遍历下一层
+        }
+    }
+  }
   /// END YOUR SOLUTION
 }
 
