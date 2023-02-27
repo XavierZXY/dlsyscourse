@@ -196,6 +196,120 @@ void ScalarAdd(const AlignedArray& a, scalar_t val, AlignedArray* out) {
  */
 
 /// BEGIN YOUR SOLUTION
+template <typename Op>
+void ElementWiseOp(const AlignedArray& a, const AlignedArray& b, AlignedArray* out) {
+  assert(a.size == b.size && a.size == out->size);
+  for (size_t i = 0; i < a.size; i++) {
+    out->ptr[i] = Op::Op(a.ptr[i], b.ptr[i]);
+  }
+}
+template <typename Op>
+void ElementWiseOp(const AlignedArray& a, AlignedArray* out) {
+  assert(a.size == out->size);
+  for (size_t i = 0; i < a.size; i++) {
+    out->ptr[i] = Op::Op(a.ptr[i]);
+  }
+}
+
+template <typename Op>
+void ScalarOp(const AlignedArray& a, scalar_t val, AlignedArray* out) {
+  assert(a.size == out->size);
+  for (size_t i = 0; i < a.size; i++) {
+    out->ptr[i] = Op::Op(a.ptr[i], val);
+  }
+}
+
+struct MulOp {
+  static scalar_t Op(scalar_t x, scalar_t y) { return x * y; }
+};
+
+struct DivOp {
+  static scalar_t Op(scalar_t x, scalar_t y) { return x / y; }
+};
+
+struct PowOp {
+  static scalar_t Op(scalar_t x, scalar_t y) { return pow(x, y); }
+};
+
+struct MaxOp {
+  static scalar_t Op(scalar_t x, scalar_t y) { return std::max(x, y); }
+};
+
+struct EqOp {
+  static scalar_t Op(scalar_t x, scalar_t y) { return scalar_t(x == y); }
+};
+
+struct GeOp {
+  static scalar_t Op(scalar_t x, scalar_t y) { return scalar_t(x >= y); }
+};
+
+struct LogOp {
+  static scalar_t Op(scalar_t x) { return log(x); }
+};
+
+struct ExpOp {
+  static scalar_t Op(scalar_t x) { return exp(x); }
+};
+
+struct TanhOp {
+  static scalar_t Op(scalar_t x) { return tanh(x); }
+};
+
+void EwiseMul(const AlignedArray& a, const AlignedArray& b, AlignedArray* out) {
+  ElementWiseOp<MulOp>(a, b, out);
+}
+
+void ScalarMul(const AlignedArray& a, scalar_t val, AlignedArray* out) {
+  ScalarOp<MulOp>(a, val, out);
+}
+
+void EwiseDiv(const AlignedArray& a, const AlignedArray& b, AlignedArray* out) {
+  ElementWiseOp<DivOp>(a, b, out);
+}
+
+void ScalarDiv(const AlignedArray& a, scalar_t val, AlignedArray* out) {
+  ScalarOp<DivOp>(a, val, out);
+}
+
+void ScalarPower(const AlignedArray& a, scalar_t val, AlignedArray* out) {
+  ScalarOp<PowOp>(a, val, out);
+}
+
+void EwiseMaximum(const AlignedArray& a, const AlignedArray& b, AlignedArray* out) {
+  ElementWiseOp<MaxOp>(a, b, out);
+}
+
+void ScalarMaximum(const AlignedArray& a, scalar_t val, AlignedArray* out) {
+  ScalarOp<MaxOp>(a, val, out);
+}
+
+void EwiseEq(const AlignedArray& a, const AlignedArray& b, AlignedArray* out) {
+  ElementWiseOp<EqOp>(a, b, out);
+}
+
+void ScalarEq(const AlignedArray& a, scalar_t val, AlignedArray* out) {
+  ScalarOp<EqOp>(a, val, out);
+}
+
+void EwiseGe(const AlignedArray& a, const AlignedArray& b, AlignedArray* out) {
+  ElementWiseOp<GeOp>(a, b, out);
+}
+
+void ScalarGe(const AlignedArray& a, scalar_t val, AlignedArray* out) {
+  ScalarOp<GeOp>(a, val, out);
+}
+
+void EwiseLog(const AlignedArray& a, AlignedArray* out) {
+  ElementWiseOp<LogOp>(a, out);
+}
+
+void EwiseExp(const AlignedArray& a, AlignedArray* out) {
+  ElementWiseOp<ExpOp>(a, out);
+}
+
+void EwiseTanh(const AlignedArray& a, AlignedArray* out) {
+  ElementWiseOp<TanhOp>(a, out);
+}
 
 /// END YOUR SOLUTION
 
@@ -215,7 +329,7 @@ void Matmul(const AlignedArray& a, const AlignedArray& b, AlignedArray* out, uin
    */
 
   /// BEGIN YOUR SOLUTION
-  
+ 
   /// END YOUR SOLUTION
 }
 
@@ -343,22 +457,22 @@ PYBIND11_MODULE(ndarray_backend_cpu, m) {
   m.def("ewise_add", EwiseAdd);
   m.def("scalar_add", ScalarAdd);
 
-  // m.def("ewise_mul", EwiseMul);
-  // m.def("scalar_mul", ScalarMul);
-  // m.def("ewise_div", EwiseDiv);
-  // m.def("scalar_div", ScalarDiv);
-  // m.def("scalar_power", ScalarPower);
+  m.def("ewise_mul", EwiseMul);
+  m.def("scalar_mul", ScalarMul);
+  m.def("ewise_div", EwiseDiv);
+  m.def("scalar_div", ScalarDiv);
+  m.def("scalar_power", ScalarPower);
 
-  // m.def("ewise_maximum", EwiseMaximum);
-  // m.def("scalar_maximum", ScalarMaximum);
-  // m.def("ewise_eq", EwiseEq);
-  // m.def("scalar_eq", ScalarEq);
-  // m.def("ewise_ge", EwiseGe);
-  // m.def("scalar_ge", ScalarGe);
+  m.def("ewise_maximum", EwiseMaximum);
+  m.def("scalar_maximum", ScalarMaximum);
+  m.def("ewise_eq", EwiseEq);
+  m.def("scalar_eq", ScalarEq);
+  m.def("ewise_ge", EwiseGe);
+  m.def("scalar_ge", ScalarGe);
 
-  // m.def("ewise_log", EwiseLog);
-  // m.def("ewise_exp", EwiseExp);
-  // m.def("ewise_tanh", EwiseTanh);
+  m.def("ewise_log", EwiseLog);
+  m.def("ewise_exp", EwiseExp);
+  m.def("ewise_tanh", EwiseTanh);
 
   m.def("matmul", Matmul);
   m.def("matmul_tiled", MatmulTiled);
