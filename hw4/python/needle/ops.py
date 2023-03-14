@@ -500,6 +500,8 @@ class Stack(TensorOp):
         for i in range(len(args)):
             slices[self.axis] = i
             # NOTE reshape
+            # e.g. slices = [slice(None, 2, None), slice(None, 3, None)]在一个维度上进行(None, 2, None)切片，
+            # 在第二个维度三进行(None, 3, None)切片，(start, end, strides)
             out[tuple(slices)] = args[i].reshape((1, ) + shape)
         return out
         ### END YOUR SOLUTION
