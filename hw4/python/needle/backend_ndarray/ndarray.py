@@ -587,23 +587,20 @@ class NDArray:
         Note: compact() before returning.
         """
         ### BEGIN YOUR SOLUTION
-        if axes is None:
-            axes = range(len(self.strides))
-        offset_sum = 0
+        assert len(axes) <= len(self.shape)
         new_strides = list(self.strides)
         for axis in axes:
-            # NOTE -1!!!
-            offset_sum += (self.shape[axis] - 1) * self.strides[axis]
-            new_strides[axis] = -self.strides[axis]
-        
-        ret = NDArray.make(
-            shape=self.shape, 
-            strides=tuple(new_strides), 
-            device=self.device, 
-            handle=self._handle, 
-            offset=offset_sum
-        )
-        return ret.compact()
+            new_strides[axis] = -new_strides[axis]
+        new_strides = tuple(new_strides)
+        new_offset = sum([(self.shape[axis]-1) * self.strides[axis] for axis in axes])
+        # new_offset计算反转后数组在内存中的起始位置，当进行反转操作时，由于数组的各个轴的大小都发生了变化
+        # 因此数组取出的第一个位置内存信息也要重新计算得到
+        # 具体来说，对于每个需要翻转的轴，它的起始位置会从原来的 0 变为 shape[axis] - 1。
+        # 这是因为在翻转后的数组中，原来在轴末端的元素现在会被放置在轴的起始位置。
+        # 因此，我们需要将这个轴的偏移量（offset）也进行相应的调整，以便正确地访问翻转后的数组中的元素。
+        return NDArray.make(self.shape, new_strides, self._device, self._handle, new_offset).compact()
+
+
         ### END YOUR SOLUTION
 
 
@@ -617,11 +614,11 @@ class NDArray:
         new_shape = list(self.shape)
         for i, ax in enumerate(axes):
             new_shape[i] += ax[0] + ax[1]
-        # NOTE not self.make!!!
         ret = NDArray.make(tuple(new_shape), device=self.device)
         ret.fill(0)
         slices = [slice(ax[0], ax[0]+self.shape[i]) for i, ax in enumerate(axes)]
         ret[tuple(slices)] = self
+        
         return ret
         ### END YOUR SOLUTION
 
