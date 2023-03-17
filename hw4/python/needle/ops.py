@@ -125,7 +125,6 @@ def mul_scalar(a, scalar):
 
 
 class PowerScalar(TensorOp):
-    """Op raise a tensor to an (integer) power."""
 
     def __init__(self, scalar: int):
         self.scalar = scalar
@@ -569,18 +568,43 @@ def flip(a, axes):
 
 
 class Dilate(TensorOp):
+    """
+    dilation 是对 kernel 进行膨胀，
+    多出来的空隙用 0 padding。用于克服 stride 中造成的 失真问题。
+    """
     def __init__(self, axes: tuple, dilation: int):
         self.axes = axes
         self.dilation = dilation
 
     def compute(self, a):
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        for ax in self.axes:
+            if ax >= len(a.shape):
+                return a
+        
+        new_shape = list(a.shape)
+        for ax in self.axes:
+            new_shape[ax] += self.dilation * new_shape[ax]
+        
+        # NTOE: device
+        ret = init.zeros(*new_shape, device=a.device)
+        slices = [
+            slice(0, new_shape[ax], self.dilation+1) if ax in self.axes
+            else slice(0, new_shape[ax], 1)
+            for ax in range(len(a.shape))
+        ]
+
+        ret.cached_data[tuple(slices)] = a
+        
+        return ret.cached_data
+
         ### END YOUR SOLUTION
 
     def gradient(self, out_grad, node):
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        
+        return undilate(out_grad, self.axes, self.dilation)
+
         ### END YOUR SOLUTION
 
 
@@ -594,12 +618,19 @@ class UnDilate(TensorOp):
 
     def compute(self, a):
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        slices = [
+            slice(0, a.shape[ax], self.dilation+1) if ax in self.axes
+            else slice(0, a.shape[ax])
+            for ax in range(len(a.shape))
+        ]
+        
+        return a[tuple(slices)]
         ### END YOUR SOLUTION
 
     def gradient(self, out_grad, node):
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+
+        return dilate(out_grad, self.axes, self.dilation)
         ### END YOUR SOLUTION
 
 
@@ -614,12 +645,12 @@ class Conv(TensorOp):
 
     def compute(self, A, B):
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        raise NotImplementedError
         ### END YOUR SOLUTION
 
     def gradient(self, out_grad, node):
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        raise NotImplementedError
         ### END YOUR SOLUTION
 
 
