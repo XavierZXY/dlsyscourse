@@ -645,15 +645,46 @@ class Conv(TensorOp):
 
     def compute(self, A, B):
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError
+        A = A.pad(((0, 0), (self.padding, self.padding), (self.padding, self.padding), (0, 0)))
+        N, H, W, C_in = A.shape
+        K, _, _, C_out = B.shape
+        Ns, Hs, Ws, Cs = A.strides
+        # NOTE stride trick https://github.com/dlsyscourse/public_notebooks/blob/main/convolution_implementation.ipynb
+        # NOTE why must compact?
+        A = A.as_strided((N, H-K+1, W-K+1, K, K, C_in), (Ns, Hs, Ws, Hs, Ws, Cs)).compact()
+        A = A.reshape((N * (H-K+1) * (W-K+1), K * K * C_in))
+        out = A @ (B.reshape((K * K * C_in, C_out)))
+        return out.reshape((N, H-K+1, W-K+1, C_out))[:, ::self.stride, ::self.stride, :]
         ### END YOUR SOLUTION
 
     def gradient(self, out_grad, node):
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError
+        X, Weight = node.inputs[0], node.inputs[1]
+        '''
+        out_grad N, H-K+1+2*p, W-K+1+2*p, C_out
+        X N, H, W, C_in
+        W K, K, C_in, C_out
+        '''
+        _, H, W, _ = X.shape
+        K = Weight.shape[0]
+        W_flip = flip(Weight, (0, 1)).transpose((2, 3))   
+        if self.stride > 1:
+            out_grad = dilate(out_grad, (1, 2), self.stride-1)
+        dX = conv(out_grad, W_flip, padding=K-1)
+        # dX = Tensor(dX.cached_data[:, K-1:H+K-1, K-1:W+K-1, :])
+        # NOTE: begin with self.padding!
+        # NOTE: device
+        dX = Tensor(dX.cached_data[:, self.padding:H+self.padding, self.padding:W+self.padding, :], device=dX.device, dtype=dX.dtype)
+        '''
+        X, out_grad
+        C_in, H, W, N
+        H-K+1+2*p, W-K+1+2*p, N, C_out
+        
+        C_in, K, K, C_out
+        '''
+        X = X.transpose((0, 3))
+        out_grad = out_grad.transpose((0, 2)).transpose((0, 1))
+        dW = conv(X, out_grad, padding=self.padding)
+        dW = dW.transpose((0, 2)).transpose((0, 1))
+        return dX, dW
         ### END YOUR SOLUTION
-
-
-def conv(a, b, stride=1, padding=1):
-    return Conv(stride, padding)(a, b)
-
