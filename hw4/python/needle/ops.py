@@ -688,3 +688,7 @@ class Conv(TensorOp):
         dW = dW.transpose((0, 2)).transpose((0, 1))
         return dX, dW
         ### END YOUR SOLUTION
+
+
+def conv(a, b, stride=1, padding=1):
+    return Conv(stride, padding)(a, b)
