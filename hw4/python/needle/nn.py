@@ -193,7 +193,7 @@ class BatchNorm1d(Module):
         ### BEGIN YOUR SOLUTION
         self.weight = Parameter(init.ones(self.dim, device=device, dtype=dtype, requires_grad=True))
         self.bias = Parameter(init.zeros(self.dim, device=device, dtype=dtype, requires_grad=True))
-        self.runnning_mean = init.zeros(self.dim, device=device, dtype=dtype)
+        self.running_mean = init.zeros(self.dim, device=device, dtype=dtype)
         self.running_var = init.ones(self.dim, device=device, dtype=dtype, requires_grad=True)
         
         ### END YOUR SOLUTION
@@ -369,7 +369,57 @@ class RNNCell(Module):
         """
         super().__init__()
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        self.input_size = input_size
+        self.hidden_size = hidden_size
+        self.bias = bias
+
+        self.W_in = Parameter(
+            init.rand(
+                input_size,
+                hidden_size,
+                low=-1/hidden_size**0.5,
+                high=1/hidden_size**0.5,
+                device=device,
+                dtype=dtype,
+                requires_grad=True
+            )
+        )
+
+        self.W_hh = Parameter(
+            init.rand(
+                hidden_size,
+                hidden_size,
+                low=-1/hidden_size**0.5,
+                high=1/hidden_size**0.5,
+                device=device,
+                dtype=dtype,
+                requires_grad=True
+            )
+        )
+
+        if bias:
+            self.bias_ih = Parameter(
+                init.rand(
+                    hidden_size,
+                    low=-1/hidden_size**0.5,
+                    high=-1/hidden_size**0.5,
+                    device=device,
+                    dtype=dtype,
+                    requires_grad=True
+                )
+            )
+            self.bias_hh = Parameter(
+                init.rand(
+                    hidden_size,
+                    low=-1/hidden_size**0.5,
+                    high=-1/hidden_size**0.5,
+                    device=device,
+                    dtype=dtype,
+                    requires_grad=True
+                )
+            )
+
+        self.nonlinearity = Tanh() if nonlinearity == 'tanh' else ReLU()
         ### END YOUR SOLUTION
 
     def forward(self, X, h=None):
@@ -384,7 +434,16 @@ class RNNCell(Module):
             for each element in the batch.
         """
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        bs = X.shape[0]
+        out = X @ self.W_ih
+        if self.bias:
+            out += self.bias_ih.reshape((1, self.hidden_size)).broadcast_to((bs, self.hidden_size))
+        if h is not None:
+            out += h @ self.W_hh
+        if self.bias:
+            out += self.bias_hh.reshape((1, self.hidden_size)).broadcast_to((bs, self.hidden_size))
+        
+        return self.nonlinearity(out)
         ### END YOUR SOLUTION
 
 
@@ -413,7 +472,16 @@ class RNN(Module):
         """
         super().__init__()
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        self.hidden_size = hidden_size
+        self.device = device
+        self.dtype = dtype
+        self.num_layers = num_layers
+        rnn_cells = [RNNCell(input_size, hidden_size, bias, nonlinearity, device, dtype)]
+
+        for i in range(num_layers - 1):
+            rnn_cells.append(RNNCell(hidden_size, hidden_size, bias, nonlinearity, device, dtype))
+
+        self.rnn_cells = rnn_cells
         ### END YOUR SOLUTION
 
     def forward(self, X, h0=None):
@@ -429,7 +497,22 @@ class RNN(Module):
         h_n of shape (num_layers, bs, hidden_size) containing the final hidden state for each element in the batch.
         """
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        Xs = ops.split(X, 0)
+        hs = ops.split(h0, 0) if h0  is not None else [None] * self.num_layers
+        out = []
+        for t, x in enumerate(Xs):
+            hiddens = []
+            for l, model in enumerate(self.rnn_cells):
+                x = model(x, hs[l])
+                hiddens.append(x)
+
+            out.append(x)
+            hs = hiddens
+            
+        out = ops.stack(out, 0)
+        hs = ops.stack(hs, 0)
+        
+        return out, hs
         ### END YOUR SOLUTION
 
 
