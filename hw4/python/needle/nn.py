@@ -373,7 +373,7 @@ class RNNCell(Module):
         self.hidden_size = hidden_size
         self.bias = bias
 
-        self.W_in = Parameter(
+        self.W_ih = Parameter(
             init.rand(
                 input_size,
                 hidden_size,
